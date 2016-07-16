@@ -65,13 +65,12 @@ def get_website_text(url):
 
 
 def get_hash(url, website_text):
-    """Get the hash of the URL itself and its content."""
+    """Get the hash of the website's content."""
     logging.debug("calculating the hash for {}".format(url))
 
-    url_hash = hashlib.md5(url.encode("utf-8"))
     website_text_hash = hashlib.md5(website_text.encode("utf-8"))
 
-    return url_hash.hexdigest(), website_text_hash.hexdigest()
+    return website_text_hash.hexdigest()
 
 
 def send_alert(changed_url, date_of_last_check):
@@ -141,23 +140,23 @@ def main():
             website_text = get_website_text(url)
 
             # get the hash of each url
-            url_hash, website_text_hash = get_hash(url, website_text)
+            website_text_hash = get_hash(url, website_text)
 
             # if we have the hash for this site already...
-            if url_hash in previous_hashes:
+            if url in previous_hashes:
                 # compare this hash to the previous pass and send an alert if there is a difference
-                if (previous_hashes[url_hash] != website_text_hash):
+                if (previous_hashes[url] != website_text_hash):
                     # something is different... sound the alarm!
                     send_alert(url, str(datetime.today()))
 
                     # redifine the hash value for this website's text to be the new hash
-                    previous_hashes[url_hash] = website_text_hash
+                    previous_hashes[url] = website_text_hash
                     url_change = True
 
             # if we do not have the hash for this site already...
             else:
                 # record the value of this new URL
-                previous_hashes[url_hash] = website_text_hash
+                previous_hashes[url] = website_text_hash
                 url_change = True
 
     # if the hash of write_hashesa URL has been added or changed...
