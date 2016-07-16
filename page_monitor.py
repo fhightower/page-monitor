@@ -36,7 +36,7 @@ def init_parser():
     """Initialize the argument parser."""
     logging.debug("initializing the argument parser")
 
-    parser = argparse.ArgumentParser(description='Monitor a webpage and send alerts if there are any changes.')
+    parser = argparse.ArgumentParser(description='Monitor a webpage for changes to its content and send alerts if there are any changes.')
     parser.add_argument('email_address', metavar="email_address", type=str, nargs=1, help='an email address from which I can send updates if a webpage changes')
     parser.add_argument('email_account_password', metavar="email_account_password", type=str, nargs=1, help='the password for the email address so that I can send notifications if a webpage changes')
 
