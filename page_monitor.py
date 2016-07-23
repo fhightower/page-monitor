@@ -137,7 +137,7 @@ def main():
         files = config['sites'][site]
 
         # if there are no files given, monitor the URL
-        if len(files) == 0:
+        if not any(files):
             files.append(site)
 
         for file in files:
@@ -165,7 +165,7 @@ def main():
                 previous_hashes[url] = website_text_hash
                 url_change = True
 
-    # if the hash of write_hashesa URL has been added or changed...
+    # if URL content has been added or changed, record the new hash for the URL content
     if url_change:
         # write the new value to a pickle
         write_hashes(previous_hashes)
