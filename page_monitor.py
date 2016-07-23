@@ -28,7 +28,8 @@ config = {
     # this is the SMTP server name for the service you are using to send an alert email when the content of a URL changes (for a list of smtp servers, see: http://www.serversmtp.com/en/what-is-my-smtp)
     'smtp_server': "SMTP.GMAIL.COM",
     # this is the absolute path to the file containing a pickle of the dictionary with the hashes for each URL
-    'url_hash_record_path': "./url_hashes.pickle"
+    'url_hash_record_path': "./url_hashes.pickle",
+    'user_agent': ""
 }
 
 
@@ -60,7 +61,12 @@ def get_website_text(url):
     """Make a request to get the content of the given URL."""
     logging.debug("making a request to {} in order to get the URL's text".format(url))
 
-    r = requests.get(url)
+    headers = dict()
+
+    if config['user_agent'] is not None and config['user_agent'] != "":
+        headers['User-Agent'] = config['user_agent']
+
+    r = requests.get(url, headers=headers)
     return r.text
 
 
