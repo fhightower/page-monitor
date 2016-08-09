@@ -81,6 +81,10 @@ def get_hash(url, website_text):
 
 def send_alert(changed_url, date_of_last_check):
     """Send an alert that the content of a URL has changed to the recipients specified in the config. from the email address given as a command-line argument."""
+    # if there are not alert recipients specified, just add teh sender as the recipient
+    if not any(config['alert_recipients']):
+        config['alert_recipients'].append(sys.argv[1])
+
     logging.debug("sending an alert from {} to {} email addresses".format(sys.argv[1], len(config['alert_recipients'])))
 
     # sender config.
