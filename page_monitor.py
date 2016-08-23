@@ -99,7 +99,7 @@ def send_alert(changed_url, date_of_last_check):
     SUBJECT = "Page Monitor Alert: " + changed_url
     TEXT = "The code on the page: " + changed_url + " has changed since it was last checked (" + date_of_last_check + ")."
 
-    # Prepare actual message
+    # prepare actual message
     message = """\From: %s\nTo: %s\nSubject: %s\n\n%s
     """ % (FROM, TO, SUBJECT, TEXT)
 
