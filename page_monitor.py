@@ -92,7 +92,7 @@ def send_alert(changed_url, date_of_last_check):
     gmail_pwd = sys.argv[2]
     FROM = gmail_user
 
-    # recipient config
+    # recipient config.
     TO = ", ".join(config['alert_recipients'])
 
     # message config.
