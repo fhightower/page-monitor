@@ -18,7 +18,7 @@ import pickle
 
 
 config = {
-    # these are email addresses that will recieve an update when there is a change
+    # these are email addresses that will receive an update when there is a change
     'alert_recipients': [''],
     # this is the absolute path to the log file
     'log_file_path': "./page_monitor.log",
