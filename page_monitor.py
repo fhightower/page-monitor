@@ -3,7 +3,10 @@
 #
 # Floyd Hightower <https://github.com/fhightower>
 # June 2016
-"""A webpage monitoring script designed to be periodically run using a cronjob or similar, task scheduling application."""
+"""A webpage monitoring script.
+
+This script requests a URL's content, hashes it, compares the hash against previous passes, and sends an email alert if there are any changes to the monitored domains.  This script is designed to be periodically run using a cronjob or similar, task scheduling application.
+"""
 
 
 import argparse
@@ -18,16 +21,18 @@ import pickle
 
 
 config = {
-    # these are email addresses that will receive an update when there is a change
+    # email addresses that will receive an alert if a website changes
     'alert_recipients': [''],
     # this is the absolute path to the log file
     'log_file_path': "./page_monitor.log",
     'logging_level': logging.WARNING,
     # these are the sites to be monitored
-    'sites': {"http://www.quechua.co.uk": ['ski-touring-idfam3660'], "http://mirror2.malwaredomains.com/files/domains.txt": []},
-    # this is the SMTP server name for the service you are using to send an alert email when the content of a URL changes (for a list of smtp servers, see: http://www.serversmtp.com/en/what-is-my-smtp)
+    'sites': {"http://www.quechua.co.uk": ['ski-touring-idfam3660'],
+              "http://mirror2.malwaredomains.com/files/domains.txt": []},
+    # SMTP server name for the email service you wish to use
+    # (for more info, see: http://www.serversmtp.com/en/what-is-my-smtp)
     'smtp_server': "SMTP.GMAIL.COM",
-    # this is the absolute path to the file containing a pickle of the dictionary with the hashes for each URL
+    # absolute path to the pickle containing a record of URLs and their hashes
     'url_hash_record_path': "./url_hashes.pickle",
     'user_agent': ""
 }
@@ -37,15 +42,18 @@ def init_parser():
     """Initialize the argument parser."""
     logging.debug("initializing the argument parser")
 
-    parser = argparse.ArgumentParser(description='Monitor a webpage for changes to its content and send alerts if there are any changes.')
-    parser.add_argument('email_address', metavar="email_address", type=str, nargs=1, help='an email address from which I can send updates if a webpage changes')
-    parser.add_argument('email_account_password', metavar="email_account_password", type=str, nargs=1, help='the password for the email address so that I can send notifications if a webpage changes')
+    parser = argparse.ArgumentParser(
+        description='Monitor a webpage for changes to its content and send alerts if there are any changes.')
+    parser.add_argument('email_address', metavar="email_address", type=str, nargs=1,
+                        help='an email address from which I can send updates if a webpage changes')
+    parser.add_argument('email_account_password', metavar="email_account_password", type=str, nargs=1,
+                        help='the password for the email address so that I can send notifications if a webpage changes')
 
     return parser.parse_args()
 
 
 def get_previous_hashes():
-    """Read the pickle containing the dictionary of the hashes URLs and the hashes of their contents."""
+    """Read the pickle containing the URLs and their hashed content."""
     logging.debug("reading the pickle containing hashes from previous passes")
 
     try:
@@ -59,7 +67,8 @@ def get_previous_hashes():
 
 def get_website_text(url):
     """Make a request to get the content of the given URL."""
-    logging.debug("making a request to {} in order to get the URL's text".format(url))
+    logging.debug(
+        "making a request to {} in order to get the URL's text".format(url))
 
     headers = dict()
 
@@ -80,26 +89,29 @@ def get_hash(url, website_text):
 
 
 def send_alert(changed_url, date_of_last_check):
-    """Send an alert that the content of a URL has changed to the recipients specified in the config. from the email address given as a command-line argument."""
-    # if there are not alert recipients specified, just add the sender as the recipient
+    """Send an email alert that the content at the given URL has changed."""
+    # if there are not alert recipients specified, just add teh sender as the
+    # recipient
     if not any(config['alert_recipients']):
         config['alert_recipients'].append(sys.argv[1])
 
-    logging.debug("sending an alert from {} to {} email addresses".format(sys.argv[1], len(config['alert_recipients'])))
+    logging.debug("sending an alert from {} to {} email addresses".format(
+        sys.argv[1], len(config['alert_recipients'])))
 
     # sender config.
     gmail_user = sys.argv[1]
     gmail_pwd = sys.argv[2]
     FROM = gmail_user
 
-    # recipient config.
+    # recipient config
     TO = ", ".join(config['alert_recipients'])
 
     # message config.
     SUBJECT = "Page Monitor Alert: " + changed_url
-    TEXT = "The code on the page: " + changed_url + " has changed since it was last checked (" + date_of_last_check + ")."
+    TEXT = "The code on the page: " + changed_url + \
+        " has changed since it was last checked (" + date_of_last_check + ")."
 
-    # prepare actual message
+    # Prepare actual message
     message = """\From: %s\nTo: %s\nSubject: %s\n\n%s
     """ % (FROM, TO, SUBJECT, TEXT)
 
@@ -113,12 +125,14 @@ def send_alert(changed_url, date_of_last_check):
         server.sendmail(FROM, TO, message)
         server.close()
     except smtplib.SMTPException as e:
-        logging.error("Failed to send the alert for {}! Error:\n{}".format(changed_url, e))
+        logging.error(
+            "Failed to send the alert for {}! Error:\n{}".format(changed_url, e))
 
 
 def write_hashes(url_hashes):
     """Write the dictionary containing the hashes of both each URL and its contents to a pickle."""
-    logging.debug("writing the hashes dictionary as a pickle to the url_hash_record_path")
+    logging.debug(
+        "writing the hashes dictionary as a pickle to the url_hash_record_path")
 
     with open(config['url_hash_record_path'], 'wb') as output_file:
         pickle.dump(url_hashes, output_file)
@@ -154,12 +168,14 @@ def main():
 
             # if we have the hash for this site already...
             if url in previous_hashes:
-                # compare this hash to the previous pass and send an alert if there is a difference
+                # compare this hash to the previous pass and send an alert if
+                # there is a difference
                 if (previous_hashes[url] != website_text_hash):
                     # something is different... sound the alarm!
                     send_alert(url, str(datetime.today()))
 
-                    # redifine the hash value for this website's text to be the new hash
+                    # redifine the hash value for this website's text to be the
+                    # new hash
                     previous_hashes[url] = website_text_hash
                     url_change = True
 
@@ -169,7 +185,8 @@ def main():
                 previous_hashes[url] = website_text_hash
                 url_change = True
 
-    # if URL content has been added or changed, record the new hash for the URL content
+    # if URL content has been added or changed, record the new hash for the
+    # URL content
     if url_change:
         # write the new value to a pickle
         write_hashes(previous_hashes)
@@ -178,7 +195,8 @@ def main():
 if __name__ == '__main__':
     # setup logging
     log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: %(lineno)d]'
-    logging.basicConfig(filename=config['log_file_path'], filemode='w', level=config['logging_level'], format=log_format)
+    logging.basicConfig(filename=config['log_file_path'], filemode='w', level=config[
+                        'logging_level'], format=log_format)
 
     # record the values of the websites
     main()
