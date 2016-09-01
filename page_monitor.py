@@ -40,21 +40,23 @@ config = {
 
 def init_parser():
     """Initialize the argument parser."""
-    logging.debug("initializing the argument parser")
+    logging.debug("Initializing the argument parser")
 
     parser = argparse.ArgumentParser(
-        description='Monitor a webpage for changes to its content and send alerts if there are any changes.')
-    parser.add_argument('email_address', metavar="email_address", type=str, nargs=1,
-                        help='an email address from which I can send updates if a webpage changes')
-    parser.add_argument('email_account_password', metavar="email_account_password", type=str, nargs=1,
-                        help='the password for the email address so that I can send notifications if a webpage changes')
+        description='Monitor a website and send alerts if it changes.')
+    parser.add_argument('email_address', metavar="email_address", type=str,
+        nargs=1,
+        help='an email address from which I can send updates if a webpage changes')
+    parser.add_argument('email_account_password',
+        metavar="email_account_password", type=str, nargs=1,
+        help='the password for the email address so that I can send notifications if a webpage changes')
 
     return parser.parse_args()
 
 
 def get_previous_hashes():
     """Read the pickle containing the URLs and their hashed content."""
-    logging.debug("reading the pickle containing hashes from previous passes")
+    logging.debug("Reading the pickle containing hashes from previous passes")
 
     try:
         with open(config['url_hash_record_path'], 'rb') as url_hash_dict:
@@ -68,7 +70,7 @@ def get_previous_hashes():
 def get_website_text(url):
     """Make a request to get the content of the given URL."""
     logging.debug(
-        "making a request to {} in order to get the URL's text".format(url))
+        "Making a request to {} in order to get the URL's text".format(url))
 
     headers = dict()
 
@@ -81,7 +83,7 @@ def get_website_text(url):
 
 def get_hash(url, website_text):
     """Get the hash of the website's content."""
-    logging.debug("calculating the hash for {}".format(url))
+    logging.debug("Calculating the hash for {}".format(url))
 
     website_text_hash = hashlib.md5(website_text.encode("utf-8"))
 
@@ -90,12 +92,12 @@ def get_hash(url, website_text):
 
 def send_alert(changed_url, date_of_last_check):
     """Send an email alert that the content at the given URL has changed."""
-    # if there are not alert recipients specified, just add teh sender as the
+    # if there are not alert recipients specified, just add the sender as the
     # recipient
     if not any(config['alert_recipients']):
         config['alert_recipients'].append(sys.argv[1])
 
-    logging.debug("sending an alert from {} to {} email addresses".format(
+    logging.debug("Sending an alert from {} to {} email addresses".format(
         sys.argv[1], len(config['alert_recipients'])))
 
     # sender config.
@@ -103,7 +105,7 @@ def send_alert(changed_url, date_of_last_check):
     gmail_pwd = sys.argv[2]
     FROM = gmail_user
 
-    # recipient config
+    # recipient config.
     TO = ", ".join(config['alert_recipients'])
 
     # message config.
@@ -111,7 +113,7 @@ def send_alert(changed_url, date_of_last_check):
     TEXT = "The code on the page: " + changed_url + \
         " has changed since it was last checked (" + date_of_last_check + ")."
 
-    # Prepare actual message
+    # prepare actual message
     message = """\From: %s\nTo: %s\nSubject: %s\n\n%s
     """ % (FROM, TO, SUBJECT, TEXT)
 
@@ -125,14 +127,12 @@ def send_alert(changed_url, date_of_last_check):
         server.sendmail(FROM, TO, message)
         server.close()
     except smtplib.SMTPException as e:
-        logging.error(
-            "Failed to send the alert for {}! Error:\n{}".format(changed_url, e))
+        logging.error("Failed to send the alert for {}! Error:\n{}".format(changed_url, e))
 
 
 def write_hashes(url_hashes):
-    """Write the dictionary containing the hashes of both each URL and its contents to a pickle."""
-    logging.debug(
-        "writing the hashes dictionary as a pickle to the url_hash_record_path")
+    """Write the URL and URL content data to a pickle."""
+    logging.debug("Writing URL data to a pickle to the url_hash_record_path")
 
     with open(config['url_hash_record_path'], 'wb') as output_file:
         pickle.dump(url_hashes, output_file)
@@ -140,7 +140,7 @@ def write_hashes(url_hashes):
 
 def main():
     """Monitor a URL for any changes since the last pass."""
-    logging.debug("starting the main function")
+    logging.debug("Starting the main function")
 
     # parse the command line arguments
     init_parser()
@@ -150,7 +150,7 @@ def main():
     # get all of the hashes from the previous pass
     previous_hashes = get_previous_hashes()
 
-    # get a list of all urls to be examined
+    # get a list of all URLs to be examined
     for site in config['sites']:
         files = config['sites'][site]
 
@@ -163,7 +163,7 @@ def main():
             # get the content of the URL
             website_text = get_website_text(url)
 
-            # get the hash of each url
+            # get the hash of each URL
             website_text_hash = get_hash(url, website_text)
 
             # if we have the hash for this site already...
@@ -174,7 +174,7 @@ def main():
                     # something is different... sound the alarm!
                     send_alert(url, str(datetime.today()))
 
-                    # redifine the hash value for this website's text to be the
+                    # redefine the hash value for this website's text to be the
                     # new hash
                     previous_hashes[url] = website_text_hash
                     url_change = True
@@ -194,9 +194,10 @@ def main():
 
 if __name__ == '__main__':
     # setup logging
-    log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: %(lineno)d]'
-    logging.basicConfig(filename=config['log_file_path'], filemode='w', level=config[
-                        'logging_level'], format=log_format)
+    log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: ' + \
+                 '%(lineno)d]'
+    logging.basicConfig(filename=config['log_file_path'], filemode='w',
+        level=config['logging_level'], format=log_format)
 
     # record the values of the websites
     main()
