@@ -173,19 +173,23 @@ def main():
             if url in previous_hashes:
                 # compare this hash to the previous pass and send an alert if
                 # there is a difference
-                if (previous_hashes[url] != website_text_hash):
+                if (previous_hashes[url]['md5'] != website_text_hash):
                     # something is different... sound the alarm!
                     send_alert(url, CURRENT_DATETIME)
 
                     # redefine the hash value for this website's text to be the
                     # new hash
-                    previous_hashes[url] = website_text_hash
+                    previous_hashes[url]['md5'] = website_text_hash
+                    previous_hashes[url]['last_changed'] = CURRENT_DATETIME
                     url_change = True
 
             # if we do not have the hash for this site already...
             else:
-                # record the value of this new URL
-                previous_hashes[url] = website_text_hash
+                # record the value of this new URL and the timestamp
+                previous_hashes[url] = {
+                    'last_changed': CURRENT_DATETIME,
+                    'md5': website_text_hash
+                }
                 url_change = True
 
     # if URL content has been added or changed, record the new hash for the
