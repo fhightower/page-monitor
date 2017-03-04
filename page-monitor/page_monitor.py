@@ -3,26 +3,24 @@
 #
 # Floyd Hightower <https://github.com/fhightower>
 # June 2016
-"""A webpage monitoring script.
-
-This script requests a URL's content, hashes it, compares the hash against previous passes, and sends an email alert if there are any changes to the monitored domains.  This script is designed to be periodically run using a cronjob or similar, task scheduling application.
-"""
+"""Webpage monitoring script which sends alert if webpage's content changes."""
 
 
 import argparse
-from datetime import datetime
+import datetime
 import hashlib
+import json
 import logging
-import requests
 import smtplib
 import sys
 
-import pickle
+import requests
 
-
-config = {
+CONFIG = {
     # email addresses that will receive an alert if a website changes
     'alert_recipients': [''],
+    # path to the json output file with a record of URLs and their hashes
+    'json_record_path': "./page_monitor.json",
     # this is the absolute path to the log file
     'log_file_path': "./page_monitor.log",
     'logging_level': logging.WARNING,
@@ -32,10 +30,10 @@ config = {
     # SMTP server name for the email service you wish to use
     # (for more info, see: http://www.serversmtp.com/en/what-is-my-smtp)
     'smtp_server': "SMTP.GMAIL.COM",
-    # absolute path to the pickle containing a record of URLs and their hashes
-    'url_hash_record_path': "./url_hashes.pickle",
-    'user_agent': ""
+    'user_agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 " +
+                  "(KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
 }
+CURRENT_DATETIME = str(datetime.datetime.today())
 
 
 def init_parser():
@@ -43,26 +41,32 @@ def init_parser():
     logging.debug("Initializing the argument parser")
 
     parser = argparse.ArgumentParser(
-        description='Monitor a website and send alerts if it changes.')
-    parser.add_argument('email_address', metavar="email_address", type=str,
-        nargs=1,
-        help='an email address from which I can send updates if a webpage changes')
-    parser.add_argument('email_account_password',
-        metavar="email_account_password", type=str, nargs=1,
-        help='the password for the email address so that I can send notifications if a webpage changes')
+        description="Monitor a website and send alerts if it changes.")
+    parser.add_argument("email_address", metavar="email_address", type=str,
+                        nargs=1, help="an email address from which I can " +
+                        "send updates if a webpage changes")
+    parser.add_argument("email_account_password", type=str, nargs=1,
+                        metavar="email_account_password", help="the " +
+                        "password for the email address so that I can " +
+                        "send notifications if a webpage changes")
 
     return parser.parse_args()
 
 
 def get_previous_hashes():
     """Read the pickle containing the URLs and their hashed content."""
-    logging.debug("Reading the pickle containing hashes from previous passes")
+    logging.debug("Retrieving hashes from previous passes")
 
     try:
-        with open(config['url_hash_record_path'], 'rb') as url_hash_dict:
-            previous_hashes = pickle.load(url_hash_dict)
-    except IOError:
-        previous_hashes = {}
+        with open(CONFIG['json_record_path'], 'r') as url_hash_json:
+            previous_hashes = json.load(url_hash_json)
+    except IOError as e:
+        logging.error("IOError likely because this is the first pass and " +
+                      "the json record file does not yet exist: {}".format(e))
+        previous_hashes = {
+            'most_recent_pass': "",
+            'urls': {}
+        }
 
     return previous_hashes
 
@@ -74,8 +78,8 @@ def get_website_text(url):
 
     headers = dict()
 
-    if config['user_agent'] is not None and config['user_agent'] != "":
-        headers['User-Agent'] = config['user_agent']
+    if CONFIG['user_agent'] is not None and CONFIG['user_agent'] != "":
+        headers['User-Agent'] = CONFIG['user_agent']
 
     r = requests.get(url, headers=headers)
     return r.text
@@ -94,11 +98,11 @@ def send_alert(changed_url, date_of_last_check):
     """Send an email alert that the content at the given URL has changed."""
     # if there are not alert recipients specified, just add the sender as the
     # recipient
-    if not any(config['alert_recipients']):
-        config['alert_recipients'].append(sys.argv[1])
+    if not any(CONFIG['alert_recipients']):
+        CONFIG['alert_recipients'].append(sys.argv[1])
 
     logging.debug("Sending an alert from {} to {} email addresses".format(
-        sys.argv[1], len(config['alert_recipients'])))
+        sys.argv[1], len(CONFIG['alert_recipients'])))
 
     # sender config.
     gmail_user = sys.argv[1]
@@ -106,7 +110,7 @@ def send_alert(changed_url, date_of_last_check):
     FROM = gmail_user
 
     # recipient config.
-    TO = ", ".join(config['alert_recipients'])
+    TO = ", ".join(CONFIG['alert_recipients'])
 
     # message config.
     SUBJECT = "Page Monitor Alert: " + changed_url
@@ -119,7 +123,7 @@ def send_alert(changed_url, date_of_last_check):
 
     # attempt to send the message
     try:
-        server = smtplib.SMTP(config['smtp_server'], 587)
+        server = smtplib.SMTP(CONFIG['smtp_server'], 587)
         server.ehlo()
         server.starttls()
         server.ehlo()
@@ -127,15 +131,17 @@ def send_alert(changed_url, date_of_last_check):
         server.sendmail(FROM, TO, message)
         server.close()
     except smtplib.SMTPException as e:
-        logging.error("Failed to send the alert for {}! Error:\n{}".format(changed_url, e))
+        logging.error("Failed to send the alert for {}: ".format(changed_url) +
+                      "{}".format(e))
 
 
 def write_hashes(url_hashes):
     """Write the URL and URL content data to a pickle."""
-    logging.debug("Writing URL data to a pickle to the url_hash_record_path")
+    logging.debug("Writing URL data to {}.".format(CONFIG['json_record_path']))
 
-    with open(config['url_hash_record_path'], 'wb') as output_file:
-        pickle.dump(url_hashes, output_file)
+    with open(CONFIG['json_record_path'], 'w+') as output_file:
+        json.dump(url_hashes, output_file, indent=4, sort_keys=True)
+        output_file.close()
 
 
 def main():
@@ -150,13 +156,15 @@ def main():
     # get all of the hashes from the previous pass
     previous_hashes = get_previous_hashes()
 
+    previous_hashes['most_recent_pass'] = CURRENT_DATETIME
+
     # get a list of all URLs to be examined
-    for site in config['sites']:
-        files = config['sites'][site]
+    for site in CONFIG['sites']:
+        files = CONFIG['sites'][site]
 
         # if there are no files given, monitor the URL
         if not any(files):
-            files.append(site)
+            files.append("")
 
         for file in files:
             url = site + "/" + file
@@ -167,37 +175,36 @@ def main():
             website_text_hash = get_hash(url, website_text)
 
             # if we have the hash for this site already...
-            if url in previous_hashes:
+            if url in previous_hashes['urls']:
                 # compare this hash to the previous pass and send an alert if
                 # there is a difference
-                if (previous_hashes[url] != website_text_hash):
+                if (previous_hashes['urls'][url]['md5'] != website_text_hash):
                     # something is different... sound the alarm!
-                    send_alert(url, str(datetime.today()))
+                    send_alert(url, CURRENT_DATETIME)
 
                     # redefine the hash value for this website's text to be the
                     # new hash
-                    previous_hashes[url] = website_text_hash
+                    previous_hashes['urls'][url]['md5'] = website_text_hash
+                    previous_hashes['urls'][url]['last_changed'] = CURRENT_DATETIME
                     url_change = True
 
             # if we do not have the hash for this site already...
             else:
-                # record the value of this new URL
-                previous_hashes[url] = website_text_hash
+                # record the value of this new URL and the timestamp
+                previous_hashes['urls'][url] = {
+                    'last_changed': CURRENT_DATETIME,
+                    'md5': website_text_hash
+                }
                 url_change = True
 
-    # if URL content has been added or changed, record the new hash for the
-    # URL content
-    if url_change:
-        # write the new value to a pickle
-        write_hashes(previous_hashes)
+    write_hashes(previous_hashes)
 
 
 if __name__ == '__main__':
     # setup logging
     log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: ' + \
                  '%(lineno)d]'
-    logging.basicConfig(filename=config['log_file_path'], filemode='w',
-        level=config['logging_level'], format=log_format)
+    logging.basicConfig(filename=CONFIG['log_file_path'], filemode='w',
+                        level=CONFIG['logging_level'], format=log_format)
 
-    # record the values of the websites
     main()

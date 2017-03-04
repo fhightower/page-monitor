@@ -20,6 +20,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -43,6 +44,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+.hypothesis/
 
 # Translations
 *.mo
@@ -50,6 +52,14 @@ coverage.xml
 
 # Django stuff:
 *.log
+local_settings.py
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -57,24 +67,31 @@ docs/_build/
 # PyBuilder
 target/
 
-# Config files
-*.conf
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# Pickle files
-*.pickle
+# pyenv
+.python-version
 
-# Databases
-*.db
+# celery beat schedule file
+celerybeat-schedule
 
-# Log files
-*.log
+# SageMath parsed files
+*.sage.py
 
-# Testing and scrap files
-test*.py
-scrap.py
+# dotenv
+.env
 
-# Beta Folder
-BETA/
+# virtualenv
+.venv
+venv/
+ENV/
+
+# Spyder project settings
+.spyderproject
+
+# Rope project settings
+.ropeproject
 
 # Mac Garbage
 ._*
