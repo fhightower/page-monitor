@@ -63,7 +63,10 @@ def get_previous_hashes():
     except IOError as e:
         logging.error("IOError likely because this is the first pass and " +
                       "the json record file does not yet exist: {}".format(e))
-        previous_hashes = {}
+        previous_hashes = {
+            'most_recent_pass': "",
+            'urls': {}
+        }
 
     return previous_hashes
 
@@ -153,6 +156,8 @@ def main():
     # get all of the hashes from the previous pass
     previous_hashes = get_previous_hashes()
 
+    previous_hashes['most_recent_pass'] = CURRENT_DATETIME
+
     # get a list of all URLs to be examined
     for site in CONFIG['sites']:
         files = CONFIG['sites'][site]
@@ -170,33 +175,29 @@ def main():
             website_text_hash = get_hash(url, website_text)
 
             # if we have the hash for this site already...
-            if url in previous_hashes:
+            if url in previous_hashes['urls']:
                 # compare this hash to the previous pass and send an alert if
                 # there is a difference
-                if (previous_hashes[url]['md5'] != website_text_hash):
+                if (previous_hashes['urls'][url]['md5'] != website_text_hash):
                     # something is different... sound the alarm!
                     send_alert(url, CURRENT_DATETIME)
 
                     # redefine the hash value for this website's text to be the
                     # new hash
-                    previous_hashes[url]['md5'] = website_text_hash
-                    previous_hashes[url]['last_changed'] = CURRENT_DATETIME
+                    previous_hashes['urls'][url]['md5'] = website_text_hash
+                    previous_hashes['urls'][url]['last_changed'] = CURRENT_DATETIME
                     url_change = True
 
             # if we do not have the hash for this site already...
             else:
                 # record the value of this new URL and the timestamp
-                previous_hashes[url] = {
+                previous_hashes['urls'][url] = {
                     'last_changed': CURRENT_DATETIME,
                     'md5': website_text_hash
                 }
                 url_change = True
 
-    # if URL content has been added or changed, record the new hash for the
-    # URL content
-    if url_change:
-        # write the new value to a pickle
-        write_hashes(previous_hashes)
+    write_hashes(previous_hashes)
 
 
 if __name__ == '__main__':

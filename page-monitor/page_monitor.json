@@ -1,10 +1,13 @@
 {
-    "http://mirror2.malwaredomains.com/files/domains.txt/": {
-        "last_changed": "2017-03-04 07:16:06.699554",
-        "md5": "5343c1a8b203c162a3bf3870d9f50fd4"
-    },
-    "http://www.quechua.co.uk/ski-touring-idfam3660": {
-        "last_changed": "2017-03-04 07:16:37.017889",
-        "md5": "5a99311c1ed090c73d19997b8570e562"
+    "most_recent_pass": "2017-03-04 07:31:46.563488",
+    "urls": {
+        "http://mirror2.malwaredomains.com/files/domains.txt/": {
+            "last_changed": "2017-03-04 07:31:09.761633",
+            "md5": "5343c1a8b203c162a3bf3870d9f50fd4"
+        },
+        "http://www.quechua.co.uk/ski-touring-idfam3660": {
+            "last_changed": "2017-03-04 07:31:46.563488",
+            "md5": "328e0d9819eb7f94711226a0ece237f2"
+        }
     }
 }
