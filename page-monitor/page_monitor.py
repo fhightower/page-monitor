@@ -118,8 +118,8 @@ def send_alert(changed_url, date_of_last_check):
         " has changed since it was last checked (" + date_of_last_check + ")."
 
     # prepare actual message
-    message = """\From: %s\nTo: %s\nSubject: %s\n\n%s
-    """ % (FROM, TO, SUBJECT, TEXT)
+    message = """\From: {0!s}\nTo: {1!s}\nSubject: {2!s}\n\n{3!s}
+    """.format(FROM, TO, SUBJECT, TEXT)
 
     # attempt to send the message
     try:
