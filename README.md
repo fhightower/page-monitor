@@ -1,5 +1,7 @@
 # Page Monitor
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f5d5d8332a48465b8009bbe8ad6fcc01)](https://www.codacy.com/app/fhightower/page-monitor?utm_source=github.com&utm_medium=referral&utm_content=fhightower/page-monitor&utm_campaign=badger)
+
 *What we see depends mainly on what we look for.*
 *- John Lubbock*
 
