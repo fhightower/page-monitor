@@ -30,8 +30,7 @@ CONFIG = {
     # SMTP server name for the email service you wish to use
     # (for more info, see: http://www.serversmtp.com/en/what-is-my-smtp)
     'smtp_server': "SMTP.GMAIL.COM",
-    'user_agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 " +
-                  "(KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
+    'user_agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
 }
 CURRENT_DATETIME = str(datetime.datetime.today())
 
@@ -40,15 +39,9 @@ def init_parser():
     """Initialize the argument parser."""
     logging.debug("Initializing the argument parser")
 
-    parser = argparse.ArgumentParser(
-        description="Monitor a website and send alerts if it changes.")
-    parser.add_argument("email_address", metavar="email_address", type=str,
-                        nargs=1, help="an email address from which I can " +
-                        "send updates if a webpage changes")
-    parser.add_argument("email_account_password", type=str, nargs=1,
-                        metavar="email_account_password", help="the " +
-                        "password for the email address so that I can " +
-                        "send notifications if a webpage changes")
+    parser = argparse.ArgumentParser(description="Monitor a website and send alerts if it changes.")
+    parser.add_argument("email_address", metavar="email_address", type=str, nargs=1, help="an email address from which I can send updates if a webpage changes")
+    parser.add_argument("email_account_password", type=str, nargs=1, metavar="email_account_password", help="the password for the email address so that I can send notifications if a webpage changes")
 
     return parser.parse_args()
 
@@ -61,8 +54,7 @@ def get_previous_hashes():
         with open(CONFIG['json_record_path'], 'r') as url_hash_json:
             previous_hashes = json.load(url_hash_json)
     except IOError as e:
-        logging.error("IOError likely because this is the first pass and " +
-                      "the json record file does not yet exist: {}".format(e))
+        logging.error("IOError likely because this is the first pass and the json record file does not yet exist: {}".format(e))
         previous_hashes = {
             'most_recent_pass': "",
             'urls': {}
@@ -73,8 +65,7 @@ def get_previous_hashes():
 
 def get_website_text(url):
     """Make a request to get the content of the given URL."""
-    logging.debug(
-        "Making a request to {} in order to get the URL's text".format(url))
+    logging.debug("Making a request to {} in order to get the URL's text".format(url))
 
     headers = dict()
 
@@ -82,6 +73,7 @@ def get_website_text(url):
         headers['User-Agent'] = CONFIG['user_agent']
 
     r = requests.get(url, headers=headers)
+
     return r.text
 
 
@@ -101,8 +93,7 @@ def send_alert(changed_url, date_of_last_check):
     if not any(CONFIG['alert_recipients']):
         CONFIG['alert_recipients'].append(sys.argv[1])
 
-    logging.debug("Sending an alert from {} to {} email addresses".format(
-        sys.argv[1], len(CONFIG['alert_recipients'])))
+    logging.debug("Sending an alert from {} to {} email addresses".format(sys.argv[1], len(CONFIG['alert_recipients'])))
 
     # sender config.
     gmail_user = sys.argv[1]
@@ -114,12 +105,10 @@ def send_alert(changed_url, date_of_last_check):
 
     # message config.
     SUBJECT = "Page Monitor Alert: " + changed_url
-    TEXT = "The code on the page: " + changed_url + \
-        " has changed since it was last checked (" + date_of_last_check + ")."
+    TEXT = "The code on the page: " + changed_url + " has changed since it was last checked (" + date_of_last_check + ")."
 
     # prepare actual message
-    message = """\From: {0!s}\nTo: {1!s}\nSubject: {2!s}\n\n{3!s}
-    """.format(FROM, TO, SUBJECT, TEXT)
+    message = """\From: {0!s}\nTo: {1!s}\nSubject: {2!s}\n\n{3!s}""".format(FROM, TO, SUBJECT, TEXT)
 
     # attempt to send the message
     try:
@@ -131,8 +120,7 @@ def send_alert(changed_url, date_of_last_check):
         server.sendmail(FROM, TO, message)
         server.close()
     except smtplib.SMTPException as e:
-        logging.error("Failed to send the alert for {}: ".format(changed_url) +
-                      "{}".format(e))
+        logging.error("Failed to send the alert for {}: ".format(changed_url) + "{}".format(e))
 
 
 def write_hashes(url_hashes):
@@ -150,8 +138,6 @@ def main():
 
     # parse the command line arguments
     init_parser()
-
-    url_change = False
 
     # get all of the hashes from the previous pass
     previous_hashes = get_previous_hashes()
@@ -186,8 +172,6 @@ def main():
                     # new hash
                     previous_hashes['urls'][url]['md5'] = website_text_hash
                     previous_hashes['urls'][url]['last_changed'] = CURRENT_DATETIME
-                    url_change = True
-
             # if we do not have the hash for this site already...
             else:
                 # record the value of this new URL and the timestamp
@@ -195,16 +179,13 @@ def main():
                     'last_changed': CURRENT_DATETIME,
                     'md5': website_text_hash
                 }
-                url_change = True
 
     write_hashes(previous_hashes)
 
 
 if __name__ == '__main__':
     # setup logging
-    log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: ' + \
-                 '%(lineno)d]'
-    logging.basicConfig(filename=CONFIG['log_file_path'], filemode='w',
-                        level=CONFIG['logging_level'], format=log_format)
+    log_format = '%(asctime)s %(levelname)s: %(message)s [%(funcName)s :: %(lineno)d]'
+    logging.basicConfig(filename=CONFIG['log_file_path'], filemode='w', level=CONFIG['logging_level'], format=log_format)
 
     main()

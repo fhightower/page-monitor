@@ -11,6 +11,9 @@ The first time `page_monitor.py` is run, it will calculate and record the hash v
 
 This program is designed to be a simple solution for monitoring a website for changes.  It can be easily run as a cronjob.
 
+If you use [ThreatConnect](https://threatconnect.com/), there is a playbook to monitor a webpage [here](https://github.com/fhightower/page-monitor-playbook).
+
+There are more complete services like [Visual Ping](https://visualping.io/) that do the same thing (and more) as this script. I cannot vouch for any of these services as I haven't used them, but you may want to look into them.
 
 ## Usage
 **usage:** page_monitor.py [-h] email_address email_account_password
