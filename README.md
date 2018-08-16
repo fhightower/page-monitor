@@ -1,5 +1,13 @@
 # Page Monitor
 
+**THIS PROJECT HAS MOVED TO GITLAB: https://gitlab.com/fhightower/page-monitor**
+
+There is documentation for this project here: [https://hightower.space/projects/page-monitor/](https://hightower.space/projects/page-monitor/).
+
+(I still use Github, so feel free to ask questions here or raise issues.)
+
+---
+
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f5d5d8332a48465b8009bbe8ad6fcc01)](https://www.codacy.com/app/fhightower/page-monitor?utm_source=github.com&utm_medium=referral&utm_content=fhightower/page-monitor&utm_campaign=badger)
 
 *What we see depends mainly on what we look for.*
